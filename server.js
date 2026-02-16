@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
-// 1. Import Models ku buryo bugaragara (Kugira ngo bitazana Error muri Stats)
+// 1. Import Models
 const Member = require('./models/Member');
 const Collaborator = require('./models/Collaborator');
 const Announcement = require('./models/Announcement');
@@ -11,9 +11,22 @@ const Attendance = require('./models/Attendance');
 
 const app = express();
 
-// 2. Vugurura CORS kugira ngo yemerere Vercel yawe
+// 2. CORS IKOSOYE (Yemerera Vercel na Local zose)
+const allowedOrigins = [
+    "https://imena-moves-kidz.vercel.app", 
+    "http://localhost:5173", 
+    "http://localhost:5174", 
+    "http://localhost:3000"
+];
+
 app.use(cors({
-    origin: ["https://imena-moves-kidz.vercel.app", "http://localhost:3000"],
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Byanzwe na CORS policy'));
+        }
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }));
@@ -25,20 +38,19 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ Connected to MongoDB Atlas"))
     .catch(err => console.log("❌ Connection Error:", err));
 
-// Routes
-// MENYA NEZA: Ko amazina ya files muri folder ya 'routes' ahuye neza n'aya:
+// 3. Routes (Reba ko amazina ya files muri folder ya routes ahuye neza n'aya)
 app.use('/api/members', require('./routes/memberRoutes'));
 app.use('/api/announcements', require('./routes/announcementRoutes'));
 app.use('/api/collaborators', require('./routes/collaboratorRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
 
-// Stats Route (Iyo Member Dashboard ikoresha)
+// 4. Stats Route
 app.get('/api/dashboard-stats', async (req, res) => {
     try {
         const memberCount = await Member.countDocuments();
         const collabCount = await Collaborator.countDocuments();
         
-        // Kosora itariki (YYYY-MM-DD) kugira ngo ihure n'iyo muri Database
+        // Itariki ikosoye (YYYY-MM-DD)
         const today = new Date().toISOString().split('T')[0];
         const attendance = await Attendance.findOne({ date: today });
         
