@@ -2,46 +2,42 @@ const express = require('express');
 const router = express.Router();
 const Collaborator = require('../models/Collaborator');
 
-// 1. Gushyiraho umufatanyabikorwa mushya (Create)
+// 1. POST: Kwandika umufatanyabikorwa mushya (Create)
 router.post('/', async (req, res) => {
     try {
         const newCollab = new Collaborator(req.body);
-        const savedCollab = await newCollab.save();
-        res.status(201).json(savedCollab);
+        const saved = await newCollab.save();
+        res.status(201).json(saved);
     } catch (err) {
-        res.status(400).json({ message: err.message });
+        res.status(400).json({ message: "Kwandika collab byanze: " + err.message });
     }
 });
 
-// 2. Gusoma abafatanyabikorwa bose (Read)
+// 2. GET: Gusoma abafatanyabikorwa bose (Read)
 router.get('/', async (req, res) => {
     try {
-        const collabs = await Collaborator.find();
+        const collabs = await Collaborator.find().sort({ createdAt: -1 });
         res.json(collabs);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
 
-// 3. Guhindura amakuru y'umufatanyabikorwa (Update)
+// 3. PUT: Guhindura amakuru (Update)
 router.put('/:id', async (req, res) => {
     try {
-        const updatedCollab = await Collaborator.findByIdAndUpdate(
-            req.params.id, 
-            req.body, 
-            { new: true }
-        );
-        res.json(updatedCollab);
+        const updated = await Collaborator.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(updated);
     } catch (err) {
         res.status(400).json({ message: err.message });
     }
 });
 
-// 4. Gusiba umufatanyabikorwa (Delete)
+// 4. DELETE: Gusiba umufatanyabikorwa
 router.delete('/:id', async (req, res) => {
     try {
         await Collaborator.findByIdAndDelete(req.params.id);
-        res.json({ message: "Collaborator deleted successfully" });
+        res.json({ message: "Collaborator yasibwe neza!" });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
