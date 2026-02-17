@@ -9,17 +9,14 @@ const app = express();
 // 2. Huza na MongoDB Atlas Database
 connectDB();
 
-// 3. Middlewares (Vugurura hano kuri CORS)
-const allowedOrigins = [
-  'https://imena-moves-kidz.vercel.app', // URL ya Vercel yawe
-  'http://localhost:5173',               // Niba ukoresha Vite kuri mudasobwa
-  'http://localhost:3000'                // Niba ukoresha Create React App
-];
+// 3. Middlewares & CORS Configuration
+// Isoma FRONTEND_URL twashyize muri Render Environment (https://imena-moves-kidz.vercel.app)
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Emerera requests zidafite origin (nka Postman) cyangwa iziri muri allowedOrigins
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    // Emerera request zidafite origin (nka mobile apps/postman) cyangwa iziturutse kuri Vercel
+    if (!origin || origin === allowedOrigin || origin === 'http://localhost:5173') {
       callback(null, true);
     } else {
       callback(new Error('CORS Policy: Iyi mbuga ntiyemerewe kuvugana na API'));
@@ -37,16 +34,23 @@ app.use('/api/collaborators', require('./routes/collaboratorRoutes'));
 app.use('/api/announcements', require('./routes/announcementRoutes'));
 app.use('/api/stats', require('./routes/statsRoutes'));
 
-// 5. Root Route
+// 5. Root Route (Kugira ngo umenye ko server ikora neza kuri Render)
 app.get('/', (req, res) => {
-  res.send('Imena Moves Kidz API is running successfully on Render...');
+  res.json({
+    message: 'Imena Moves Kidz API is running successfully!',
+    status: 'Connected',
+    frontend_allowed: allowedOrigin
+  });
 });
 
 // 6. Gufungura Port ya Server
+// Render itanga Port yayo mu buryo bwa automatic binyuze kuri process.env.PORT
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`-------------------------------------------`);
-  console.log(`🚀 Imena Backend running on port ${PORT}`);
-  console.log(`📂 API Base URL: https://imena-backend.onrender.com`);
+  console.log(`🚀 Imena Backend is LIVE`);
+  console.log(`📡 Port: ${PORT}`);
+  console.log(`🌍 URL: https://imena-backend.onrender.com`);
+  console.log(`👉 Allowed Frontend: ${allowedOrigin}`);
   console.log(`-------------------------------------------`);
 });
