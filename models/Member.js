@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
 const MemberSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  email: String,
-  phone: String,
-  joinedAt: { type: Date, default: Date.now }
-});
+  age: Number,
+  parentName: String,
+  phone: { type: String, required: true },
+  status: { type: String, enum: ['active', 'inactive'], default: 'active' }
+}, { timestamps: true });
 module.exports = mongoose.model('Member', MemberSchema);
