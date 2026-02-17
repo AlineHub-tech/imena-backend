@@ -1,49 +1,33 @@
 const express = require('express');
 const router = express.Router();
 const Member = require('../models/Member');
+const Collaborator = require('../models/Collaborator');
+const Attendance = require('../models/Attendance');
+const Announcement = require('../models/Announcement');
 
-// 1. POST: Kwandika umunyamuryango mushya (Create)
-router.post('/', async (req, res) => {
+router.get('/dashboard-stats', async (req, res) => {
     try {
-        const newMember = new Member(req.body);
-        const savedMember = await newMember.save();
-        res.status(201).json(savedMember);
-    } catch (err) {
-        res.status(400).json({ message: "Kwandika umunyamuryango byanze: " + err.message });
-    }
-});
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-// 2. GET: Gusoma abanyamuryango bose (Read)
-router.get('/', async (req, res) => {
-    try {
-        const members = await Member.find().sort({ createdAt: -1 });
-        res.json(members);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
+        const totalMembers = await Member.countDocuments();
+        const totalCollabs = await Collaborator.countDocuments();
+        const presentToday = await Attendance.countDocuments({ date: { $gte: today }, status: 'present' });
+        const absentToday = await Attendance.countDocuments({ date: { $gte: today }, status: 'absent' });
+        
+        // Itangazo rya nyuma ryasohotse uyu munsi
+        const todayAnnouncement = await Announcement.findOne({ date: { $gte: today } }).sort({ date: -1 });
 
-// 3. PUT: Guhindura amakuru y'umunyamuryango (Update/Edit)
-router.put('/:id', async (req, res) => {
-    try {
-        const updatedMember = await Member.findByIdAndUpdate(
-            req.params.id, 
-            req.body, 
-            { new: true }
-        );
-        res.json(updatedMember);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
-});
-
-// 4. DELETE: Gusiba umunyamuryango (Delete)
-router.delete('/:id', async (req, res) => {
-    try {
-        await Member.findByIdAndDelete(req.params.id);
-        res.json({ message: "Umunyamuryango yasibwe neza!" });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.json({
+            totalMembers,
+            totalCollabs,
+            presentToday,
+            absentToday,
+            announcement: todayAnnouncement ? todayAnnouncement.content : "Nta tangazo ryamamajwe uyu munsi",
+            date: new Date().toDateString()
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
