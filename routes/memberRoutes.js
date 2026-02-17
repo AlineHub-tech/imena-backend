@@ -1,34 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const Member = require('../models/Member');
-const Collaborator = require('../models/Collaborator');
-const Attendance = require('../models/Attendance');
-const Announcement = require('../models/Announcement');
 
-router.get('/dashboard-stats', async (req, res) => {
-    try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+router.get('/', async (req, res) => {
+  const members = await Member.find();
+  res.json(members);
+});
 
-        const totalMembers = await Member.countDocuments();
-        const totalCollabs = await Collaborator.countDocuments();
-        const presentToday = await Attendance.countDocuments({ date: { $gte: today }, status: 'present' });
-        const absentToday = await Attendance.countDocuments({ date: { $gte: today }, status: 'absent' });
-        
-        // Itangazo rya nyuma ryasohotse uyu munsi
-        const todayAnnouncement = await Announcement.findOne({ date: { $gte: today } }).sort({ date: -1 });
+router.post('/', async (req, res) => {
+  const newMember = new Member(req.body);
+  const saved = await newMember.save();
+  res.json(saved);
+});
 
-        res.json({
-            totalMembers,
-            totalCollabs,
-            presentToday,
-            absentToday,
-            announcement: todayAnnouncement ? todayAnnouncement.content : "Nta tangazo ryamamajwe uyu munsi",
-            date: new Date().toDateString()
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+router.put('/:id', async (req, res) => {
+  const updated = await Member.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(updated);
+});
+
+router.delete('/:id', async (req, res) => {
+  await Member.findByIdAndDelete(req.params.id);
+  res.json({ msg: 'Member deleted' });
 });
 
 module.exports = router;
