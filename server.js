@@ -1,33 +1,49 @@
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./config/db');
+const mongoose = require('mongoose');
 require('dotenv').config();
-
-// 1. Huza na MongoDB Atlas (Menya neza ko MONGO_URI iri kuri Render)
-connectDB();
 
 const app = express();
 
-// 2. Middlewares
-// Gukoresha cors() gutya gusa birakuraho amakosa ya CORS 100% mu gihe ukiri gu-deploy
-app.use(cors()); 
+// 1. Middlewares
+app.use(cors()); // Kwemerera Frontend yawe (Vercel) kuvugana na Backend
+app.use(express.json()); // Kwakira amakuru ya JSON ava muri Dashboard
 
-// Iyi igomba kuba hejuru ya routes kugira ngo yakire JSON data
-app.use(express.json()); 
+// 2. Database Connection (MongoDB Atlas)
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('✅ MongoDB Connected Successfully!');
+  } catch (err) {
+    console.error('❌ Database Connection Error:', err.message);
+    process.exit(1);
+  }
+};
+connectDB();
 
-// 3. Inzira za API (Routes)
+// 3. API Routes (Inzira z'amakuru)
+// Menya neza ko amazina ya Files muri folder ya 'routes' ahura n'aya:
 app.use('/api/members', require('./routes/memberRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/collaborators', require('./routes/collaboratorRoutes'));
 app.use('/api/announcements', require('./routes/announcementRoutes'));
 app.use('/api/stats', require('./routes/statsRoutes'));
 
-// 4. Root Route (Kugira ngo ugenzure niba Backend ikora kuri Browser)
+// 4. Root Route (Kureba niba Backend ikora kuri Browser)
 app.get('/', (req, res) => {
-  res.json({ message: "Imena Backend is Live and Running!" });
+  res.json({ 
+    status: "Active",
+    message: "Imena Moves Backend is Live!",
+    version: "1.0.0"
+  });
 });
 
-// 5. Gufungura Port ya Server
+// 5. Error Handling (Igihe hari route idahari)
+app.use((req, res) => {
+  res.status(404).json({ message: "Iyo nzira (Route) ntibonetse!" });
+});
+
+// 6. Gufungura Port
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
